@@ -25,7 +25,7 @@ limitations under the License.
         padding: 15px;
       }
       canvas {
-        width: 200px;
+        /* width: 200px; */
       }
       .prediction-canvas{
         width: 100px;
@@ -51,13 +51,22 @@ limitations under the License.
       }
       .canvases {
         display: inline-block;
-        width: 460px;
+        /* width: 460px; */
+      }
+      .learningrate {
+        width: 80px;
+        text-align: right;
       }
     </style>
-
     <div id="content">
       <h3>TensorFlow.js: Train MNIST with the Layers API</h3>
-
+      <div id="commands">
+        <table>
+          <tr><td colspan="2"><input id="trainButton" type="button" value="train"/><input id="testButton" type="button" value="inference"/></td></tr>
+          <tr><td>Learning rate:</td><td><input class="learningrate" id="learningrate" type="text" value="0.15"/></td></tr>
+          <tr><td>Iteration:</td><td><input class="learningrate" id="iteration" type="number" value="150"/></td></tr>
+        </table>
+      </div>
       <div id="status">Loading data...</div>
       <div id="message"></div>
 

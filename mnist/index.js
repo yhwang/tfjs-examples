@@ -20,36 +20,7 @@ import * as tf from '@tensorflow/tfjs';
 import {MnistData} from './data';
 import * as ui from './ui';
 
-const model = tf.sequential();
-
-model.add(tf.layers.conv2d({
-  inputShape: [28, 28, 1],
-  kernelSize: 5,
-  filters: 8,
-  strides: 1,
-  activation: 'relu',
-  kernelInitializer: 'varianceScaling'
-}));
-model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
-model.add(tf.layers.conv2d({
-  kernelSize: 5,
-  filters: 16,
-  strides: 1,
-  activation: 'relu',
-  kernelInitializer: 'varianceScaling'
-}));
-model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
-model.add(tf.layers.flatten());
-model.add(tf.layers.dense(
-    {units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax'}));
-
-const LEARNING_RATE = 0.15;
-const optimizer = tf.train.sgd(LEARNING_RATE);
-model.compile({
-  optimizer: optimizer,
-  loss: 'categoricalCrossentropy',
-  metrics: ['accuracy'],
-});
+var modelInst;
 
 const BATCH_SIZE = 64;
 const TRAIN_BATCHES = 150;
@@ -59,13 +30,50 @@ const TRAIN_BATCHES = 150;
 const TEST_BATCH_SIZE = 1000;
 const TEST_ITERATION_FREQUENCY = 5;
 
-async function train() {
+function createModel() {
+  const model = tf.sequential();
+
+  model.add(tf.layers.conv2d({
+    inputShape: [28, 28, 1],
+    kernelSize: 5,
+    filters: 8,
+    strides: 1,
+    activation: 'relu',
+    kernelInitializer: 'varianceScaling'
+  }));
+  model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
+  model.add(tf.layers.conv2d({
+    kernelSize: 5,
+    filters: 16,
+    strides: 1,
+    activation: 'relu',
+    kernelInitializer: 'varianceScaling'
+  }));
+  model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
+  model.add(tf.layers.flatten());
+  model.add(tf.layers.dense({
+    units: 10,
+    kernelInitializer: 'varianceScaling',
+    activation: 'softmax'
+  }));
+
+  const optimizer = tf.train.sgd(ui.getLearningRate());
+  model.compile({
+    optimizer: optimizer,
+    loss: 'categoricalCrossentropy',
+    metrics: ['accuracy'],
+  });
+
+  return model;
+}
+
+async function train(model) {
   ui.isTraining();
 
   const lossValues = [];
   const accuracyValues = [];
-
-  for (let i = 0; i < TRAIN_BATCHES; i++) {
+  const iteration = ui.getIteration();
+  for (let i = 0; i < iteration; i++) {
     const batch = data.nextTrainBatch(BATCH_SIZE);
 
     let testBatch;
@@ -105,9 +113,10 @@ async function train() {
 
     await tf.nextFrame();
   }
+  ui.trainingDone();
 }
 
-async function showPredictions() {
+async function showPredictions(model) {
   const testExamples = 100;
   const batch = data.nextTestBatch(testExamples);
 
@@ -130,7 +139,28 @@ async function load() {
 
 async function mnist() {
   await load();
-  await train();
-  showPredictions();
 }
+
+function prediction() {
+  showPredictions(modelInst);
+}
+
+async function doTrain() {
+  modelInst = createModel();
+  ui.clearTestImages();
+  ui.setTrainable(false);
+  ui.setTestable(false);
+  await train(modelInst);
+  ui.setTrainable(true);
+  ui.setTestable(true);
+}
+
+ui.setTrainAction(() => {
+  doTrain();
+});
+ui.setTestAction(prediction);
+ui.setTrainable(false);
 mnist();
+ui.setTrainable(true);
+ui.loadDataDone();
+ui.setTestable(false);

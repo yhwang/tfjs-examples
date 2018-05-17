@@ -20,13 +20,54 @@ import embed from 'vega-embed';
 const statusElement = document.getElementById('status');
 const messageElement = document.getElementById('message');
 const imagesElement = document.getElementById('images');
+const trainButton = document.getElementById('trainButton');
+const learningRate = document.getElementById('learningrate');
+const iteration = document.getElementById('iteration');
+const testButton = document.getElementById('testButton');
 
 export function isTraining() {
   statusElement.innerText = 'Training...';
 }
+
+export function getIteration() {
+  return parseInt(iteration.value);
+}
+
+export function getLearningRate() {
+  return parseFloat(learningRate.value);
+}
+
+export function trainingDone() {
+  statusElement.innerText = 'Training...done';
+}
+
+export function loadDataDone() {
+  statusElement.innerHTML = 'Loading data...done'
+}
+
+export function setTestable(val) {
+  testButton.disabled = (val === false);
+}
+
+export function setTrainable(val) {
+  trainButton.disabled = (val === false);
+}
+
+export function setTrainAction(func) {
+  trainButton.onclick = func;
+}
+
+export function setTestAction(func) {
+  testButton.onclick = func;
+}
+
 export function trainingLog(message) {
   messageElement.innerText = `${message}\n`;
   console.log(message);
+}
+
+export function clearTestImages() {
+  imagesElement.innerHTML = '';
 }
 
 export function showTestResults(batch, predictions, labels) {
@@ -34,6 +75,7 @@ export function showTestResults(batch, predictions, labels) {
 
   const testExamples = batch.xs.shape[0];
   let totalCorrect = 0;
+  clearTestImages();
   for (let i = 0; i < testExamples; i++) {
     const image = batch.xs.slice([i, 0], [1, batch.xs.shape[1]]);
 
@@ -55,9 +97,9 @@ export function showTestResults(batch, predictions, labels) {
 
     div.appendChild(pred);
     div.appendChild(canvas);
-
     imagesElement.appendChild(div);
   }
+  statusElement.innerText = 'Testing...done';
 }
 
 const lossLabelElement = document.getElementById('loss-label');
@@ -68,7 +110,8 @@ export function plotLosses(lossValues) {
         '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
         'data': {'values': lossValues},
         'mark': {'type': 'line'},
-        'width': 260,
+        'width': 600,
+        'height': 400,
         'orient': 'vertical',
         'encoding': {
           'x': {'field': 'batch', 'type': 'ordinal'},
@@ -76,7 +119,7 @@ export function plotLosses(lossValues) {
           'color': {'field': 'set', 'type': 'nominal', 'legend': null},
         }
       },
-      {width: 360});
+      {width: 600, height: 400});
   lossLabelElement.innerText =
       'last loss: ' + lossValues[lossValues.length - 1].loss.toFixed(2);
 }
@@ -86,7 +129,8 @@ export function plotAccuracies(accuracyValues) {
       '#accuracyCanvas', {
         '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
         'data': {'values': accuracyValues},
-        'width': 260,
+        'width': 600,
+        'height': 400,
         'mark': {'type': 'line', 'legend': null},
         'orient': 'vertical',
         'encoding': {
@@ -95,7 +139,7 @@ export function plotAccuracies(accuracyValues) {
           'color': {'field': 'set', 'type': 'nominal', 'legend': null},
         }
       },
-      {'width': 360});
+      {width: 600, height: 400});
   accuracyLabelElement.innerText = 'last accuracy: ' +
       (accuracyValues[accuracyValues.length - 1].accuracy * 100).toFixed(2) +
       '%';
